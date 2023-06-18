@@ -16,12 +16,12 @@ const mainController = {
    let id = req.params.id
    
     db.Book.findByPk(id,{
-      attributes : ['name', 'surname', 'email', 'icon'],
+      attributes : ['title', 'cover', 'description'],
       include : ['authors']
   })
-       .then(libro=>{
+       .then(book=>{
 
-    return res.render('bookDetail',{libro})
+    return res.render('bookDetail',{book})
        })
        .catch((error) => console.log(error));
     ;
