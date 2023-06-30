@@ -1,5 +1,7 @@
 const bcryptjs = require('bcryptjs');
+const { Op } = require("sequelize");
 const db = require('../database/models');
+
 
 const mainController = {
   home: (req, res) => {
@@ -13,29 +15,48 @@ const mainController = {
   },
   bookDetail: (req, res) => {
     // Implement look for details in the database
-   let id = req.params.id
-   
-    db.Book.findByPk(id,{
-      attributes : ['title', 'cover', 'description'],
-      include : ['authors']
+    db.Book.findByPk(req.params.id, {
+      include: ['authors']
   })
-       .then(book=>{
+      .then(libro => {
 
-    return res.render('bookDetail',{book})
-       })
-       .catch((error) => console.log(error));
-    ;
+          res.render('bookDetail.ejs', { libro })
+      }) .catch((error) => console.log(error))
+      ;
+   
   },
   bookSearch: (req, res) => {
-    res.render('search', { books: [] });
+    db.Book.findAll({
+      where : {
+        title : {
+          [Op.like] : `%${req.query.search}%`
+        }
+      },
+      include :['authors']
+    }).then(books=>{
+   res.render('search',{
+    books
+  })
+    })
+/*     res.render('results', { books: [] }); */
   },
-  bookSearchResult: (req, res) => {
+/*   bookSearchResult: (req, res) => {
     // Implement search by title
-    res.render('search');
-  },
-  deleteBook: (req, res) => {
+   
+  }, */
+  deleteBook: (req, res) =>{
     // Implement delete book
-    res.render('home');
+  
+      db.Book.destroy({
+       where : {id:+req.params.id},
+       force:true
+      }).then(()=>{
+        res.redirect('/')
+      })
+      .catch(error => console.log(error))
+       
+   
+
   },
   authors: (req, res) => {
     db.Author.findAll()
@@ -44,9 +65,26 @@ const mainController = {
       })
       .catch((error) => console.log(error));
   },
-  authorBooks: (req, res) => {
-    // Implement books by author
-    res.render('authorBooks');
+  authorBooks:async (req,res) => {
+    const autorId = req.params.id
+    try {
+      const autor = await db.Author.findByPk(autorId, { include: 'books' })
+      if (!autor) {
+        throw new Error('Autor no encontrado')
+      }
+      res.render('authorBooks', { autor })
+    } catch (error) {
+      console.log(error)
+      return res.status(error.status || 500).json({
+        ok:false,
+        error : {
+            status : error.status || 500,
+            message : error.message || 'Upss hubo un error' 
+        }
+    })
+    }
+  
+  /*   res.render('authorBooks'); */
   },
   register: (req, res) => {
     res.render('register');
@@ -72,13 +110,80 @@ const mainController = {
     // Implement login process
     res.render('home');
   },
-  edit: (req, res) => {
+  edit: async (req, res) => {
     // Implement edit book
-    res.render('editBook', {id: req.params.id})
+    try {
+      const id =+req.params.id;
+      const libro = await db.Book.findByPk(id);
+      res.render('editBook', { 
+        ...libro.dataValues 
+      })
+
+     /* console.log(libro) */
+    } catch (error) {
+      console.log(error)
+      return res.status(error.status || 500).json({
+        ok:false,
+        error : {
+            status : error.status || 500,
+            message : error.message || 'Upss hubo un error' 
+        }
+    })
+    }
   },
-  processEdit: (req, res) => {
+  processEdit: async (req, res) => {
     // Implement edit book
-    res.render('home');
+   /*  const {title,cover,description}  = req.body;
+
+    const id = req.params.id */
+ 
+try {
+
+  /* const {title,cover,description} = req.body */
+ /*  const libro = await db.Book.findByPk(id); */
+
+    await db.Book.update(
+      {  ...req.body
+        
+      },
+     {  where:{
+      id: req.params.id
+  } } 
+    )
+
+    
+    return res.redirect('/books/detail/'+ req.params.id)
+}  catch (error) {
+      console.log(error)
+      return res.status(error.status || 500).json({
+        ok:false,
+        error : {
+            status : error.status || 500,
+            message : error.message || 'Upss hubo un error' 
+        }
+    })
+    }
+    /*    db.Book.update(
+        
+            {
+                title: title.trim(),
+                cover : cover ,
+                description : description,
+            },
+            {
+                where : {id}
+            }
+            
+              )
+              .then(libro => {
+              
+    return res.redirect('home',
+  {...libro
+         })
+              })
+               
+    
+    .catch(error=> console.log(error)) */
   }
 };
 

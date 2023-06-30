@@ -1,5 +1,6 @@
 const express = require('express');
 const mainRouter = require('./routes/main');
+const methodOverride = require('method-override');
 
 const app = express();
 
@@ -11,6 +12,8 @@ app.set('views', 'src/views');
 
 app.use('/', mainRouter);
 
-app.listen(3000, () => {
-  console.log('listening in http://localhost:3000');
+app.use(methodOverride('_method'));
+
+app.listen(3001, () => {
+  console.log('listening in http://localhost:3001');
 });
