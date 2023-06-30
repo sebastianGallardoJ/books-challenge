@@ -131,37 +131,32 @@ const mainController = {
     })
     }
   },
-  processEdit: async (req, res) => {
+  processEdit: (req, res) => {
     // Implement edit book
    /*  const {title,cover,description}  = req.body;
 
     const id = req.params.id */
  
-try {
+
 
   /* const {title,cover,description} = req.body */
  /*  const libro = await db.Book.findByPk(id); */
 
-    await db.Book.update(
+     db.Book.update(
       {  ...req.body
         
       },
      {  where:{
       id: req.params.id
   } } 
-    )
+    ).then(() => {
+      res.redirect('/books/detail/'+ req.params.id);
+    } )
 
     
-    return res.redirect('/books/detail/'+ req.params.id)
-}  catch (error) {
-      console.log(error)
-      return res.status(error.status || 500).json({
-        ok:false,
-        error : {
-            status : error.status || 500,
-            message : error.message || 'Upss hubo un error' 
-        }
-    })
+    
+    .catch((error) => console.log(error));
+  
     }
     /*    db.Book.update(
         
@@ -185,6 +180,6 @@ try {
     
     .catch(error=> console.log(error)) */
   }
-};
+;
 
 module.exports = mainController;
